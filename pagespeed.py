@@ -5,6 +5,7 @@ try:
   import gspread ## put in another folder
   import requests
   from oauth2client.service_account import ServiceAccountCredentials # put in another folder
+  import json
 except Exception as e:
   raise e
 
@@ -41,11 +42,9 @@ class PageSpeedv5():
 
 ## class SpreadsheetReporter
 class SpreadsheetReporter():
-  def __init__(self, file_path):
-    self.credentials = ServiceAccountCredentials.from_json_keyfile_name(
-      file_path, 
-      scopes=SCOPES
-    )
+  def __init__(self, file_data):
+    self.data = json.loads(file_data)
+    self.credentials = ServiceAccountCredentials.from_json_keyfile_dict(self.data, scopes=SCOPES)
 
   def _authorize(self):
     try:
