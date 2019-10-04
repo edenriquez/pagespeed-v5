@@ -1,53 +1,74 @@
 # -*- coding: utf-8 -*-
-import datetime
-import gspread
-import requests
 
-from oauth2client.service_account import ServiceAccountCredentials
+try:
+  import datetime
+  import gspread ## put in another folder
+  import requests
+  from oauth2client.service_account import ServiceAccountCredentials # put in another folder
+except Exception as e:
+  raise e
 
-scope = ['https://spreadsheets.google.com/feeds',
-         'https://www.googleapis.com/auth/drive']
-
-credentials = ServiceAccountCredentials.from_json_keyfile_name('key.json', scope)
-
-gc = gspread.authorize(credentials)
-
-sh = gc.open_by_key('xxxxx')
-
-for idx, sheet in enumerate(sh.worksheets()):
-    if sheet.spreadsheet.title == "xxxx":
-        worksheet = sh.get_worksheet(idx-1)
+## CONSTANTS
+API_BASE = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
+SCOPES = ['https://spreadsheets.google.com/feeds',
+        'https://www.googleapis.com/auth/drive']
 
 
-api_key = 'xxxxx'
-url = 'xxxx'
-strategy = 'desktop'
+## class PageSpeedv5
+class PageSpeedv5():
+  def __init__(self, api_key, url, strategy):
+    self.params = {
+      'url': url,
+      'key': api_key,
+      'strategy': strategy
+    }
 
-params = {
-    'url': url,
-    'strategy': strategy,
-    'key': api_key
-}
-endpoint = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
+  def _requestor(self):
+    return requests.get(API_BASE, params=self.params).json()
 
-def request(params):
-    response = requests.get(endpoint, params=params)
-    return response.json()
+  def fetch_all(self):
+    try:
+      return self._requestor()
+    except Exception as e:
+      raise e
 
-all = request(params)
-light = all['lighthouseResult']
-light['audits']['first-contentful-paint']['displayValue']
-light['audits']['first-meaningful-paint']['displayValue']
-light['audits']['speed-index']['displayValue']
-light['audits']['first-cpu-idle']['displayValue']
-light['audits']['max-potential-fid']['displayValue']
-
-
-# review these 
-
-light['audits']['diagnostics']
-# light['first-contentful-paint']['displayValue'].replace(u'\xa0', u' ')
+  def fetch_light_house(self):
+    try:
+      return self._requestor()['lighthouseResult']['audits']
+    except Exception as e:
+      raise e
 
 
-current_time = datetime.datetime.now().strftime("%d-%b-%Y %H:%M:%S.%f")
-# worksheet.update_acell('A3', current_time)
+## class SpreadsheetReporter
+class SpreadsheetReporter():
+  def __init__(self, file_path):
+    self.credentials = ServiceAccountCredentials.from_json_keyfile_name(
+      file_path, 
+      scopes=SCOPES
+    )
+
+  def _authorize(self):
+    try:
+      return gspread.authorize(self.credentials)
+    except Exception as e:
+      raise e
+
+  def open(self, doc_id, sheet_page):
+    try:
+      auth = self._authorize()
+      sheets = auth.open_by_key(doc_id)
+      self.working_sheet = sheets.get_worksheet(sheet_page)
+    except Exception as e:
+      raise e
+
+  def set_daily_metrics(self, light_house_result):
+    current_time = datetime.datetime.now().strftime("%d-%b-%Y %H:%M:%S.%f")
+    self.values = [
+      current_time,
+      light_house_result['first-contentful-paint']['displayValue'],
+      light_house_result['speed-index']['displayValue'],
+      light_house_result['first-meaningful-paint']['displayValue'],
+      light_house_result['first-cpu-idle']['displayValue'],
+      light_house_result['max-potential-fid']['displayValue']
+    ]
+    self.working_sheet.append_row(self.values)

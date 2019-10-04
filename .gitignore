@@ -3,6 +3,7 @@
 **key.json
 **.vscode/*
 .DS_Store
+.env
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
