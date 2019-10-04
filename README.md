@@ -1,5 +1,9 @@
 # pagespeed-v5
 
+![Action Status](https://action-badges.now.sh/edenriquez/pagespeed-v5?workflow=metrics)
+
+
+
 Python wrapper over [Google Page Speed v5](https://developers.google.com/speed/docs/insights/v5/get-started)and optional integration over [Google SpreadSheet](https://developers.google.com/sheets/api) to bulk common metrics  information.
 
 - First Contentful Paint	
